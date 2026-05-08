@@ -74,17 +74,17 @@
   /* === MOBILE: <= 640px → bottom nav, full width === */
   @media (max-width:640px){
     .app{flex-direction:column;min-height:100vh;min-height:100dvh}
-    .side{width:100%;position:fixed;bottom:0;left:0;right:0;z-index:999;padding:0;background:linear-gradient(180deg,#1e293b,#0f172a);flex-shrink:0;order:2;box-shadow:0 -2px 16px rgba(0,0,0,.3)}
+    .side{width:100%;position:fixed;top:0;left:0;right:0;z-index:999;padding:0;background:linear-gradient(180deg,#0f172a,#1e293b);flex-shrink:0;order:0;box-shadow:0 2px 16px rgba(0,0,0,.3)}
     .side .logo{display:none}
-    .side nav{display:none;position:absolute;bottom:100%;left:0;right:0;background:linear-gradient(180deg,#1e293b,#0f172a);flex-direction:row;flex-wrap:wrap;gap:4px;padding:12px 8px;box-shadow:0 -4px 20px rgba(0,0,0,.4);border-radius:16px 16px 0 0;max-height:70vh;overflow-y:auto}
+    .side nav{display:none;position:absolute;top:100%;left:0;right:0;background:linear-gradient(180deg,#1e293b,#0f172a);flex-direction:row;flex-wrap:wrap;gap:6px;padding:14px 10px 20px;box-shadow:0 4px 20px rgba(0,0,0,.4);border-radius:0 0 16px 16px;max-height:75vh;overflow-y:auto}
     .side nav.mob-open{display:flex}
-    .side nav button{flex:0 0 calc(33.33% - 4px);padding:10px 4px;font-size:12px;border-radius:10px;flex-direction:column;gap:2px;text-align:center;justify-content:center}
-    .side nav button .ico{font-size:22px;width:auto}
-    .side nav button .ltxt{display:block!important;font-size:10px;white-space:nowrap;opacity:.9;max-width:90px;overflow:hidden;text-overflow:ellipsis}
+    .side nav button{flex:0 0 calc(33.33% - 6px);padding:12px 4px;font-size:13px;border-radius:12px;flex-direction:column;gap:3px;text-align:center;justify-content:center}
+    .side nav button .ico{font-size:24px;width:auto}
+    .side nav button .ltxt{display:block!important;font-size:11px;white-space:nowrap;opacity:.9;max-width:90px;overflow:hidden;text-overflow:ellipsis}
     .side nav button.act{background:var(--pri)}
     .side .streak{display:none}
     #mobMenuBar{display:flex!important}
-    main{padding:14px 10px 64px 10px;order:1;max-width:100vw}
+    main{padding:64px 10px 14px 10px;order:1;max-width:100vw}
     h1{font-size:20px}
     .cards{grid-template-columns:repeat(2,1fr);gap:8px}
     .card{padding:12px;border-radius:10px}
@@ -114,7 +114,7 @@
     .score-circle{width:90px;height:90px;font-size:28px}
     /* Guide overlay mobile */
     #guideOverlay>div{max-height:85vh;border-radius:16px 16px 0 0}
-    #fabHome{bottom:70px!important;left:10px!important;width:44px!important;height:44px!important}
+    #fabHome{bottom:16px!important;left:10px!important;width:44px!important;height:44px!important}
     /* Grammar/SOS/Timeline/Exam mobile */
     .card h3{font-size:15px}
     .card{overflow-x:hidden}
@@ -221,12 +221,12 @@
       <button onclick="showGuide()" style="margin-top:10px;background:linear-gradient(90deg,#d1fae5,#a7f3d0);color:#065f46;font-weight:600;border-radius:10px"><span class="ico">❓</span><span class="ltxt">Hướng dẫn</span></button>
     </nav>
     <!-- Mobile menu bar -->
-    <div id="mobMenuBar" style="display:none;align-items:center;justify-content:space-between;padding:8px 12px;gap:8px">
-      <button id="mobMenuBtn" onclick="toggleMobMenu()" style="background:none;border:none;color:#fff;font-size:26px;padding:4px 8px;cursor:pointer;display:flex;align-items:center;gap:8px">
-        <span id="mobMenuIco">☰</span><span style="font-size:14px;font-weight:600" id="mobMenuLabel">Menu</span>
+    <div id="mobMenuBar" style="display:none;align-items:center;justify-content:center;padding:6px 12px;gap:10px">
+      <span style="color:#fff;font-size:11px;opacity:.6;position:absolute;left:12px">🔥 <b id="mobStreak">0</b></span>
+      <button id="mobMenuBtn" onclick="toggleMobMenu()" style="background:linear-gradient(135deg,#4f46e5,#6366f1);border:none;color:#fff;font-size:18px;font-weight:700;padding:8px 28px;cursor:pointer;display:flex;align-items:center;gap:8px;border-radius:10px;letter-spacing:1px;box-shadow:0 2px 10px rgba(79,70,229,.4)">
+        <span id="mobMenuIco" style="font-size:22px">☰</span><span id="mobMenuLabel">MENU</span>
       </button>
-      <span id="mobCurrentView" style="color:#fff;font-size:13px;font-weight:600;opacity:.8"></span>
-      <span style="color:#fff;font-size:12px;opacity:.7">🔥 <b id="mobStreak">0</b></span>
+      <span id="mobCurrentView" style="color:#fff;font-size:11px;font-weight:600;opacity:.6;position:absolute;right:12px;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
     </div>
     <div class="streak ltxt">
       <small>🔥 Chuỗi ngày</small>
@@ -8671,10 +8671,20 @@ VIEWS.settings = function(){
     </div>
     <div class="card" style="margin-top:14px">
       <h3 style="margin-top:0">📲 Đồng bộ thiết bị</h3>
-      <p style="font-size:13px;color:var(--muted);margin:0 0 10px">Chuyển tiến độ học giữa laptop ↔ điện thoại bằng mã code</p>
-      <div class="row" style="gap:8px;flex-wrap:wrap">
-        <button class="btn btn-pri" onclick="generateSyncCode()">📤 Tạo mã đồng bộ</button>
-        <button class="btn btn-ghost" onclick="showImportSync()">📥 Nhập mã từ máy khác</button>
+      <p style="font-size:13px;color:var(--muted);margin:0 0 10px">Chuyển tiến độ học giữa laptop ↔ điện thoại</p>
+      <div style="margin-bottom:10px">
+        <b style="font-size:13px">Cách 1: File (khuyên dùng)</b>
+        <div class="row" style="gap:8px;flex-wrap:wrap;margin-top:6px">
+          <button class="btn btn-pri" onclick="exportSyncFile()">📤 Tải file đồng bộ</button>
+          <label class="btn btn-ghost" style="cursor:pointer">📥 Nhập file từ máy khác <input type="file" accept=".json" onchange="importSyncFile(event)" style="display:none"></label>
+        </div>
+      </div>
+      <div>
+        <b style="font-size:13px">Cách 2: Mã text</b>
+        <div class="row" style="gap:8px;flex-wrap:wrap;margin-top:6px">
+          <button class="btn btn-ghost" onclick="generateSyncCode()" style="font-size:12px">📤 Tạo mã</button>
+          <button class="btn btn-ghost" onclick="showImportSync()" style="font-size:12px">📥 Nhập mã</button>
+        </div>
       </div>
       <div id="syncArea" style="margin-top:12px"></div>
     </div>
@@ -8741,6 +8751,49 @@ window.resetAll = function(){
   }
 };
 
+/* --- SYNC FILE: đồng bộ bằng file JSON (khuyên dùng) --- */
+window.exportSyncFile = function(){
+  const data = JSON.stringify(S, null, 0);
+  const blob = new Blob([data], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const d = new Date().toISOString().slice(0,10);
+  a.href = url;
+  a.download = "hoc-tieng-trung-"+d+".json";
+  a.click();
+  URL.revokeObjectURL(url);
+  toast("Đã tải file! Gửi file qua Zalo/Messenger sang điện thoại.");
+  const area = document.getElementById("syncArea");
+  area.innerHTML = `
+    <div style="background:#f0fdf4;border:2px solid #22c55e;border-radius:10px;padding:14px;margin-top:8px">
+      <p style="margin:0;font-size:13px"><b>Bước tiếp:</b></p>
+      <ol style="margin:6px 0 0;padding-left:20px;font-size:13px;line-height:1.8">
+        <li>Gửi file <b>hoc-tieng-trung-${d}.json</b> qua Zalo/Messenger</li>
+        <li>Mở điện thoại → tải file về</li>
+        <li>Mở app → Cài đặt → <b>"Nhập file từ máy khác"</b> → chọn file</li>
+      </ol>
+    </div>
+  `;
+};
+window.importSyncFile = function(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev){
+    try {
+      const imported = JSON.parse(ev.target.result);
+      if(!imported || typeof imported !== "object") throw "bad";
+      S = Object.assign(defaultState(), imported);
+      saveState();
+      toast("Đồng bộ thành công! Đã nhập tiến độ học.");
+      render("settings");
+    } catch(err){
+      toast("File không hợp lệ. Kiểm tra lại!","err");
+    }
+  };
+  reader.readAsText(file);
+};
+
 /* --- SYNC CODE: đồng bộ bằng mã ngắn gọn --- */
 /* Chỉ lưu key viết tắt + dữ liệu thay đổi → base64 an toàn */
 const _syncKeys={xp:"a",streak:"b",lastDay:"c",studyDays:"d",completedLessons:"e",vocabSRS:"f",mistakes:"g",quizHistory:"h",settings:"i",speakingScores:"j",dailyDone:"k",completedExpress:"l",expressStart:"m",lazyDone:"n",lazyHour:"o",roadmap:"p",todayFlashcards:"q",todayRoadmapDone:"r",milestones:"s",levelTestPassed:"t",timelineDay:"u",timelineStart:"v"};
@@ -8798,7 +8851,7 @@ window.showImportSync = function(){
 };
 window.applySyncCode = function(){
   try {
-    const code = document.getElementById("syncInput").value.trim();
+    const code = document.getElementById("syncInput").value.replace(/\s+/g,"").trim();
     if(!code){ toast("Chưa dán mã!","err"); return; }
     const json = decodeURIComponent(escape(atob(code)));
     const raw = JSON.parse(json);
