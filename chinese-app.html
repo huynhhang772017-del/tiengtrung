@@ -8741,30 +8741,27 @@ window.resetAll = function(){
   }
 };
 
-/* --- LZ-String mini compression (LZW-based) --- */
-const LZ={compress:function(s){if(!s)return"";var d={},c="",w="",a=[],r="",e="",i,f=256;for(i=0;i<256;i++)d[String.fromCharCode(i)]=i;for(i=0;i<s.length;i++){c=s.charAt(i);e=w+c;if(d[e]!=null){w=e}else{a.push(d[w]);d[e]=f++;w=c}}if(w!=="")a.push(d[w]);var out="";for(i=0;i<a.length;i++)out+=String.fromCharCode(a[i]);return out},decompress:function(s){if(!s)return"";var d=[],c,o,w,e,i,f=256;for(i=0;i<256;i++)d[i]=String.fromCharCode(i);var a=[];for(i=0;i<s.length;i++)a.push(s.charCodeAt(i));w=String.fromCharCode(a[0]);var r=w;for(i=1;i<a.length;i++){c=a[i];if(c<f){e=d[c]}else if(c===f){e=w+w.charAt(0)}else return null;r+=e;d[f++]=w+e.charAt(0);w=e}return r}};
-/* Encode compressed string to URL-safe base64 */
-function toB64(s){return btoa(unescape(encodeURIComponent(s))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"")}
-function fromB64(s){s=s.replace(/-/g,"+").replace(/_/g,"/");while(s.length%4)s+="=";return decodeURIComponent(escape(atob(s)))}
+/* --- SYNC CODE: đồng bộ bằng mã ngắn gọn --- */
+/* Chỉ lưu key viết tắt + dữ liệu thay đổi → base64 an toàn */
+const _syncKeys={xp:"a",streak:"b",lastDay:"c",studyDays:"d",completedLessons:"e",vocabSRS:"f",mistakes:"g",quizHistory:"h",settings:"i",speakingScores:"j",dailyDone:"k",completedExpress:"l",expressStart:"m",lazyDone:"n",lazyHour:"o",roadmap:"p",todayFlashcards:"q",todayRoadmapDone:"r",milestones:"s",levelTestPassed:"t",timelineDay:"u",timelineStart:"v"};
+const _syncKeysR={};for(const k in _syncKeys)_syncKeysR[_syncKeys[k]]=k;
 
-/* --- SYNC CODE: đồng bộ bằng mã nén gọn --- */
 window.generateSyncCode = function(){
-  /* Chỉ lấy dữ liệu tiến trình, bỏ settings mặc định */
   const essential = {};
   const def = defaultState();
   for(const k in S){
     if(JSON.stringify(S[k]) !== JSON.stringify(def[k])){
-      essential[k] = S[k];
+      const short = _syncKeys[k] || k;
+      essential[short] = S[k];
     }
   }
   const json = JSON.stringify(essential);
-  const compressed = toB64(LZ.compress(json));
+  const code = btoa(unescape(encodeURIComponent(json)));
   const area = document.getElementById("syncArea");
-  const len = compressed.length;
   area.innerHTML = `
     <div style="background:#f0fdf4;border:2px solid #22c55e;border-radius:10px;padding:14px">
-      <div style="font-weight:600;color:#059669;margin-bottom:8px">📤 Mã đồng bộ (${len} ký tự):</div>
-      <textarea id="syncCode" readonly style="width:100%;height:80px;font-size:11px;font-family:monospace;border:1px solid #d1d5db;border-radius:6px;padding:8px;resize:none">${compressed}</textarea>
+      <div style="font-weight:600;color:#059669;margin-bottom:8px">📤 Mã đồng bộ (${code.length} ký tự):</div>
+      <textarea id="syncCode" readonly style="width:100%;height:80px;font-size:11px;font-family:monospace;border:1px solid #d1d5db;border-radius:6px;padding:8px;resize:none">${code}</textarea>
       <div style="display:flex;gap:8px;margin-top:8px">
         <button class="btn btn-pri" onclick="copySyncCode()" style="flex:1">📋 Copy mã</button>
         <button class="btn btn-ghost" onclick="shareSyncCode()" style="flex:1">📤 Chia sẻ</button>
@@ -8803,16 +8800,14 @@ window.applySyncCode = function(){
   try {
     const code = document.getElementById("syncInput").value.trim();
     if(!code){ toast("Chưa dán mã!","err"); return; }
-    let json;
-    try {
-      /* Thử giải nén LZ mới trước */
-      json = LZ.decompress(fromB64(code));
-      if(!json || json.charAt(0)!=="{") throw "not LZ";
-    } catch(e){
-      /* Fallback: mã cũ (base64 thuần) */
-      json = decodeURIComponent(escape(atob(code)));
+    const json = decodeURIComponent(escape(atob(code)));
+    const raw = JSON.parse(json);
+    /* Giải mã key viết tắt → key đầy đủ */
+    const imported = {};
+    for(const k in raw){
+      const fullKey = _syncKeysR[k] || k;
+      imported[fullKey] = raw[k];
     }
-    const imported = JSON.parse(json);
     S = Object.assign(defaultState(), imported);
     saveState();
     toast("Đồng bộ thành công! Đã nhập tiến độ học.");
