@@ -2622,19 +2622,29 @@ function _speakBrowser(text, opts={}){
   // Nếu sau 2s vẫn im → dùng iframe
   setTimeout(()=>{ if(!spoken) _speakIframe(text); }, 2000);
 }
+/* Detect iOS/Safari */
+const _isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1);
+const _isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+const _isIOSOrSafari = _isIOS || _isSafari;
+
 function speak(text, opts={}){
-  // Chỉ đọc chữ Hán (tránh đọc pinyin Latin như tiếng Anh)
   if(!/[\u4e00-\u9fff]/.test(text)){
     toast("Chỉ đọc được chữ Hán, không đọc pinyin Latin","info");
     return;
   }
   _stopNative();
-  if("speechSynthesis" in window) window.speechSynthesis.cancel();
-  // Ưu tiên giọng bản ngữ Google (chất lượng cao)
+
+  // Safari/iOS: PHẢI gọi speechSynthesis đồng bộ ngay trong click handler
+  if(_isIOSOrSafari){
+    _speakSafari(text, opts);
+    return;
+  }
+
+  // Chrome/Android/Laptop: thử Google TTS trước
   if(S.settings.ttsEngine !== "browser"){
     try {
       const rate = opts.rate || S.settings.rate || 0.9;
-      const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=zh-CN&client=tw-ob&q=${encodeURIComponent(text)}`;
+      const url = "https://translate.google.com/translate_tts?ie=UTF-8&tl=zh-CN&client=tw-ob&q="+encodeURIComponent(text);
       _nativeAudio = new Audio(url);
       _nativeAudio.playbackRate = rate;
       let googleOk = false;
@@ -2646,7 +2656,6 @@ function speak(text, opts={}){
       };
       _nativeAudio.onplaying = ()=>{ googleOk = true; };
       _nativeAudio.onerror = doFallback;
-      // Timeout 2s: nếu Google TTS chưa phát → thử cách khác
       setTimeout(doFallback, 2000);
       const p = _nativeAudio.play();
       if(p && p.catch) p.catch(doFallback);
@@ -2657,6 +2666,30 @@ function speak(text, opts={}){
     }
   }
   _speakBrowser(text, opts);
+}
+
+/* Safari/iOS chuyên dụng: gọi speechSynthesis đồng bộ ngay */
+function _speakSafari(text, opts){
+  if(!("speechSynthesis" in window)){
+    _speakIframe(text);
+    return;
+  }
+  try { window.speechSynthesis.cancel(); } catch(e){}
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = "zh-CN";
+  u.rate = opts.rate || S.settings.rate || 0.9;
+  u.pitch = 1;
+  const voices = window.speechSynthesis.getVoices();
+  let zhV = voices.find(v=>v.lang==="zh-CN");
+  if(!zhV) zhV = voices.find(v=>v.lang&&v.lang.startsWith("zh"));
+  if(!zhV) zhV = voices.find(v=>v.lang&&v.lang.includes("zh"));
+  if(!zhV) zhV = voices.find(v=>v.name&&v.name.includes("Ting"));
+  if(zhV) u.voice = zhV;
+  u.onerror = ()=>{ _speakIframe(text); };
+  window.speechSynthesis.speak(u);
+  // iOS workaround: resume nếu bị pause tự động
+  setTimeout(()=>{ try{ if(window.speechSynthesis.paused) window.speechSynthesis.resume(); }catch(e){} }, 100);
+  setTimeout(()=>{ try{ if(window.speechSynthesis.paused) window.speechSynthesis.resume(); }catch(e){} }, 500);
 }
 
 let recognizing = false;
