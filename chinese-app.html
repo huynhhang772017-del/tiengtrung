@@ -2584,13 +2584,25 @@ function toast(msg, type="ok"){
    ===================================================== */
 // Audio element dùng cho TTS từ Google (giọng bản ngữ chuẩn)
 let _nativeAudio = null;
+let _ttsIframe = null;
 function _stopNative(){
   if(_nativeAudio){ try{_nativeAudio.pause();_nativeAudio.src="";}catch(e){} _nativeAudio=null; }
-  if("speechSynthesis" in window) window.speechSynthesis.cancel();
+  if(_ttsIframe){ try{_ttsIframe.remove();}catch(e){} _ttsIframe=null; }
+  if("speechSynthesis" in window) try{window.speechSynthesis.cancel();}catch(e){}
+}
+/* Cách 3: iframe ẩn phát Google TTS — chạy được trên mọi di động */
+function _speakIframe(text){
+  if(_ttsIframe){ try{_ttsIframe.remove();}catch(e){} }
+  const url = "https://translate.google.com/translate_tts?ie=UTF-8&tl=zh-CN&client=tw-ob&q="+encodeURIComponent(text);
+  _ttsIframe = document.createElement("iframe");
+  _ttsIframe.src = url;
+  _ttsIframe.allow = "autoplay";
+  _ttsIframe.style.cssText = "display:none;width:0;height:0;border:0;position:absolute";
+  document.body.appendChild(_ttsIframe);
+  setTimeout(()=>{ if(_ttsIframe){try{_ttsIframe.remove();}catch(e){} _ttsIframe=null;} }, 10000);
 }
 function _speakBrowser(text, opts={}){
-  if(!("speechSynthesis" in window)) { toast("Trình duyệt không hỗ trợ TTS","err"); return; }
-  // iOS Safari cần resume trước khi speak
+  if(!("speechSynthesis" in window)){ _speakIframe(text); return; }
   try { window.speechSynthesis.cancel(); } catch(e){}
   const u = new SpeechSynthesisUtterance(text);
   u.lang = S.settings.voice || "zh-CN";
@@ -2599,13 +2611,16 @@ function _speakBrowser(text, opts={}){
   const voices = window.speechSynthesis.getVoices();
   let zhVoice = voices.find(v=>v.lang === (S.settings.voice||"zh-CN"));
   if(!zhVoice) zhVoice = voices.find(v=>v.lang && v.lang.startsWith("zh"));
+  if(!zhVoice) zhVoice = voices.find(v=>v.lang && v.lang.includes("zh"));
   if(zhVoice) u.voice = zhVoice;
-  // iOS fix: speechSynthesis hay bị treo, cần resume
+  let spoken = false;
+  u.onstart = ()=>{ spoken = true; };
+  u.onerror = ()=>{ if(!spoken) _speakIframe(text); };
   window.speechSynthesis.speak(u);
-  // iOS workaround: resume nếu bị pause tự động
-  setTimeout(()=>{
-    if(window.speechSynthesis.paused) window.speechSynthesis.resume();
-  }, 100);
+  // iOS workaround
+  setTimeout(()=>{ try{ if(window.speechSynthesis.paused) window.speechSynthesis.resume(); }catch(e){} }, 100);
+  // Nếu sau 2s vẫn im → dùng iframe
+  setTimeout(()=>{ if(!spoken) _speakIframe(text); }, 2000);
 }
 function speak(text, opts={}){
   // Chỉ đọc chữ Hán (tránh đọc pinyin Latin như tiếng Anh)
@@ -2631,8 +2646,8 @@ function speak(text, opts={}){
       };
       _nativeAudio.onplaying = ()=>{ googleOk = true; };
       _nativeAudio.onerror = doFallback;
-      // Timeout 2.5s: nếu Google TTS chưa phát → dùng giọng trình duyệt
-      setTimeout(doFallback, 2500);
+      // Timeout 2s: nếu Google TTS chưa phát → thử cách khác
+      setTimeout(doFallback, 2000);
       const p = _nativeAudio.play();
       if(p && p.catch) p.catch(doFallback);
       return;
